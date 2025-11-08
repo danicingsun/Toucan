@@ -20,13 +20,6 @@
     <div class="message bot">Hello 👋 — Could I help you book a room?</div>
   </div>
 
-  <div class="buttons">
-    <button class="option" onclick="send('Book a Room')">Book a Room</button>
-    <button class="option" onclick="send('View prices')">View prices</button>
-    <button class="option" onclick="send('Contact reception')">Contact reception</button>
-    <button class="option" onclick="send('Breakfast options')">Breakfast options</button>
-  </div>
-
   <div style="margin-top:14px;">
     <input id="textInput" type="text" placeholder="Type your message..." style="width:70%; padding:8px;" />
     <button onclick="sendText()" style="padding:8px 12px;">Send</button>
@@ -50,7 +43,7 @@ function send(message){
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message })
   }).then(r => r.json()).then(data => {
-    addMessage('app', data.reply);
+    addMessage('Toucan', data.reply);
   }).catch(err => {
     addMessage('Toucan', 'Sorry, an error occurred.');
   });

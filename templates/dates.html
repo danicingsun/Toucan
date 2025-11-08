@@ -50,7 +50,7 @@ function send(message){
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message })
   }).then(r => r.json()).then(data => {
-    addMessage('app', data.reply);
+    addMessage('Toucan', data.reply);
   }).catch(err => {
     addMessage('Toucan', 'Sorry, an error occurred.');
   });

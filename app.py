@@ -1,72 +1,104 @@
 from flask import Flask, render_template, request, jsonify
-from chatterbot import ChatBot
-from chatterbot.trainers import ListTrainer
-import json, os
+#import spacy
 
-app = Flask(__name__, template_folder='templates', static_folder='static')
+app = Flask(__name__)
+#nlp = spacy.load('en_core_web_sm')
 
-# Initialize ChatterBot
-chatbot = ChatBot(
-    "ToucanHotelBot",
-    logic_adapters=[
-        "chatterbot.logic.BestMatch"
-    ],
-    database_uri="sqlite:///toucan_bot_db.sqlite3"
-)
+# Basic conversation state memory
+user_state = {}
 
-trainer = ListTrainer(chatbot)
+@app.route("/")
+def home():
+    return render_template("index.html")
 
-# Load training data
-training_file = os.path.join(os.path.dirname(__file__), 'training_data.json')
-if os.path.exists(training_file):
-    with open(training_file, 'r') as f:
-        data = json.load(f)
-        # train with flattened conversation lists
-        for convo in data.get("conversations", []):
-            try:
-                trainer.train(convo)
-            except Exception:
-                # ignore training errors in environments without chatterbot support
-                pass
+@app.route("/chat", methods=["POST"])
+def chat():
+    user_input = request.json.get("message", "").strip().lower()
+    user_id = "default_user"
 
-# Simple rule-based helper
-def rule_based_response(message):
-    m = message.lower()
-    if any(x in m for x in ["book a room", "book", "reserve"]):
-        return "Sure! May I have your full name, please?"
-    if any(x in m for x in ["check-in", "checkin", "check in", "dates", "date"]):
-        return "Please tell me your check-in and check-out dates (e.g., 2025-07-01 to 2025-07-05)."
-    if any(x in m for x in ["guest", "guests", "how many"]):
-        return "How many guests will be staying? (e.g., 2 adults, 1 child)"
-    if "breakfast" in m:
-        return "We offer continental and full breakfast options. Would you like breakfast included? (Yes / No)"
-    if "pay" in m or "payment" in m:
-        return "Would you prefer to pay now or at check-in? (Pay now / Pay at check-in)"
-    if "non-refundable" in m or "cancel" in m:
-        return "Non-refundable bookings are cheaper. Do you want 'Yes' (non-refundable) or 'Flexible' (cancel for €20)?"
-    if any(x in m for x in ["confirm", "i confirm"]):
-        return "Thank you! Your booking is confirmed. Can I help with anything else?"
-    return None
+    # Initialize state
+    if user_id not in user_state:
+        user_state[user_id] = {"step": 0, "data": {}}
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+    step = user_state[user_id]["step"]
+    data = user_state[user_id]["data"]
 
-@app.route('/reply', methods=['POST'])
-def reply():
-    payload = request.get_json(force=True)
-    message = payload.get('message', '')
-    # Try rule-based first
-    rb = rule_based_response(message)
-    if rb:
-        return jsonify({'reply': rb})
-    # Fallback to ChatterBot
-    try:
-        bot_reply = str(chatbot.get_response(message))
-        return jsonify({'reply': bot_reply})
-    except Exception as e:
-        # If ChatterBot not available or fails, safe fallback
-        return jsonify({'reply': "Sorry, I couldn't process that. Can you rephrase?"})
+    # Step-based conversation flow
+    if step == 0:
+        reply = "Hello, could I help you book a room?"
+        user_state[user_id]["step"] = 1
 
-if __name__ == '__main__':
-    app.run()
+    elif step == 1:
+        if "yes" in user_input:
+            reply = "Great! What is your name?"
+            user_state[user_id]["step"] = 2
+            render_template("book")
+        else:
+            reply = "Alright, let me know if you change your mind!"
+            user_state[user_id]["step"] = 0
+
+    elif step == 2:
+        data["name"] = user_input.title()
+        reply = f"Nice to meet you, {data['name']}! What are your check-in and check-out dates?"
+        user_state[user_id]["step"] = 3
+
+    elif step == 3:
+        data["dates"] = user_input
+        reply = "How many guests will stay in the room?"
+        user_state[user_id]["step"] = 4
+
+    elif step == 4:
+        data["guests"] = user_input
+        reply = ("For a couple, we recommend a double room. For 3 adults, a triple room. "
+                 "For families, a family room or larger suite. Which option do you prefer?")
+        user_state[user_id]["step"] = 5
+
+    elif step == 5:
+        data["room_type"] = user_input
+        reply = "Would you like breakfast included?"
+        user_state[user_id]["step"] = 6
+
+    elif step == 6:
+        data["breakfast"] = user_input
+        reply = "Would you prefer to pay now or at check-in time?"
+        user_state[user_id]["step"] = 7
+
+    elif step == 7:
+        data["payment"] = user_input
+        reply = ("Would you prefer a non-refundable room? "
+                 "Options: 'Yes' or 'I prefer to cancel a few days in advance (+€20)'")
+        user_state[user_id]["step"] = 8
+
+    elif step == 8:
+        data["refund_policy"] = user_input
+        summary = (f"Here is your booking summary:\n"
+                   f"👤 Name: {data['name']}\n"
+                   f"📅 Dates: {data['dates']}\n"
+                   f"👥 Guests: {data['guests']}\n"
+                   f"🛏 Room: {data['room_type']}\n"
+                   f"🥐 Breakfast: {data['breakfast']}\n"
+                   f"💳 Payment: {data['payment']}\n"
+                   f"🔁 Refund Policy: {data['refund_policy']}")
+        reply = summary + "\nPlease confirm your booking ('I confirm' / 'Change' / 'Start over')."
+        user_state[user_id]["step"] = 9
+
+    elif step == 9:
+        if "confirm" in user_input:
+            reply = "✅ Thank you! Your booking is confirmed. Can I assist you with anything else?"
+            user_state[user_id]["step"] = 0
+        elif "change" in user_input:
+            reply = "Sure, what would you like to change?"
+        elif "start over" in user_input:
+            user_state[user_id] = {"step": 0, "data": {}}
+            reply = "Let’s start again. Hello, could I help you book a room?"
+        else:
+            reply = "Please type 'I confirm', 'Change', or 'Start over'."
+
+    else:
+        reply = "I’m sorry, I didn’t understand that."
+
+    return jsonify({"response": reply})
+
+
+if __name__ == "__main__":
+    app.run(port=8080)

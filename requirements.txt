@@ -1,4 +1,2 @@
 flask
-chatterbot
-chatterbot-corpus
-en_core_web_sm
+spacy
