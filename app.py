@@ -69,4 +69,4 @@ def reply():
         return jsonify({'reply': "Sorry, I couldn't process that. Can you rephrase?"})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
