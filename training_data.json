@@ -1,0 +1,18 @@
+{
+  "conversations": [
+    ["Hello", "Hello 👋 — Could I help you book a room?"],
+    ["Hi", "Welcome to Hotel Van der Valk. How can I assist you today?"],
+    ["I want to book a room", "Sure! May I have your full name, please?"],
+    ["My name is Anna Johnson", "Thank you, Anna. What are your check-in and check-out dates?"],
+    ["From 2025-07-01 to 2025-07-05", "Got it. How many guests will be staying?"],
+    ["Two adults", "For two adults we suggest a double room. Would you like to proceed with a double room or see alternatives?"],
+    ["Three adults", "For three adults you could take a triple room, or a double + single. Which do you prefer?"],
+    ["Family with two kids", "We can offer a family room (up to 2 kids), a double with sofa, or a bigger double with an extra cot. Which would you like?"],
+    ["I choose double room", "Great. Would you like breakfast included? (Yes / No)"],
+    ["Yes", "Breakfast will be added. Would you like to pay now or at check-in? (Pay now / Pay at check-in)"],
+    ["Pay now", "Would you prefer a non-refundable rate (cheaper) or flexible cancellation for €20? (Yes = non-refundable / Flexible)"],
+    ["Flexible", "Understood. Here is an overview of your booking: Guest: Anna Johnson; Dates: 2025-07-01 to 2025-07-05; Guests: 2 adults; Room: Double; Breakfast: Included; Payment: Pay now; Cancellation: Flexible (€20). Please confirm your booking."],
+    ["I confirm", "Thank you! Your booking is confirmed. Can I be of any further assistance?"],
+    ["No, thanks", "You're welcome! Have a great day."]
+  ]
+}

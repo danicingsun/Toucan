@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Toucan — Hotel Van der Valk Chatbot</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; max-width:800px; margin:30px auto; }
+    .chat { border:1px solid #ddd; padding:16px; border-radius:8px; min-height:300px; }
+    .message { margin:8px 0; }
+    .user { text-align:right; }
+    .bot { text-align:left; }
+    .buttons { margin-top:12px; }
+    button.option { margin:6px 6px 0 0; padding:8px 12px; border-radius:6px; border:none; background:#007bff; color:white; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <h1>Toucan — Hotel Van der Valk</h1>
+  <div class="chat" id="chat">
+    <div class="message bot">Hello 👋 — Could I help you book a room?</div>
+  </div>
+
+  <div class="buttons">
+    <button class="option" onclick="send('Book a Room')">Book a Room</button>
+    <button class="option" onclick="send('View prices')">View prices</button>
+    <button class="option" onclick="send('Contact reception')">Contact reception</button>
+    <button class="option" onclick="send('Breakfast options')">Breakfast options</button>
+  </div>
+
+  <div style="margin-top:14px;">
+    <input id="textInput" type="text" placeholder="Type your message..." style="width:70%; padding:8px;" />
+    <button onclick="sendText()" style="padding:8px 12px;">Send</button>
+    <button onclick="startOver()" style="padding:8px 12px;">Start over</button>
+  </div>
+
+<script>
+function addMessage(sender, text){
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = 'message ' + (sender === 'You' ? 'user' : 'bot');
+  div.innerHTML = '<strong>' + sender + ':</strong> ' + text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function send(message){
+  addMessage('You', message);
+  fetch('/reply', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message })
+  }).then(r => r.json()).then(data => {
+    addMessage('Toucan', data.reply);
+  }).catch(err => {
+    addMessage('Toucan', 'Sorry, an error occurred.');
+  });
+}
+
+function sendText(){
+  const inp = document.getElementById('textInput');
+  const txt = inp.value.trim();
+  if(!txt) return;
+  send(txt);
+  inp.value = '';
+}
+
+function startOver(){
+  const chat = document.getElementById('chat');
+  chat.innerHTML = '<div class="message bot">Hello 👋 — Could I help you book a room?</div>';
+}
+</script>
+</body>
+</html>
